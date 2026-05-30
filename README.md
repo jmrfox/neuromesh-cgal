@@ -21,8 +21,8 @@ sudo apt-get install libcgal-dev libeigen3-dev cmake build-essential
 neuromesh-cgal/
 ├── src/                    # Source files
 │   ├── mesh_simplify.cpp   # Mesh simplification (edge collapse)
-│   ├── mesh_smooth.cpp     # Mesh smoothing
-│   └── mesh_remesh.cpp     # Isotropic remeshing
+│   ├── mesh_repair.cpp     # Mesh repair and cleanup
+│   └── mesh_segmentation.cpp # SDF computation and mesh segmentation
 ├── data/                   # Input/output mesh files (.obj)
 ├── build/                  # Build directory (generated)
 └── CMakeLists.txt          # CMake configuration
@@ -76,6 +76,31 @@ Repairs meshes to ensure single component, no boundaries, and detects self-inter
 6. Removes degenerate faces
 
 See `docs/repair_strategy.md` for detailed methodology.
+
+### Mesh Segmentation
+Computes Shape Diameter Function (SDF) values and segments a mesh into parts using CGAL's graph-cut segmentation.
+
+**Phase 1 — compute SDF:**
+```bash
+./build/mesh_segmentation --sdf data/repaired.obj data/repaired
+# Writes data/repaired.obj and data/repaired.sdf
+```
+
+**Phase 2 — segment from SDF:**
+```bash
+./build/mesh_segmentation --segment data/repaired.obj data/segmented --clusters 4 --lambda 0.3
+# Writes data/segmented.obj, data/segmented.ply (colored), and data/segmented.seg
+```
+
+Phase 2 auto-loads the SDF sidecar from the input mesh basename (e.g. `repaired.obj` → `repaired.sdf`). Use `--sdf-file` to override.
+
+Optional flags:
+- `--sdf`: `--rays N`, `--cone-angle A`
+- `--segment`: `--sdf-file path`, `--clusters N`, `--lambda L`
+
+SDF values are stored in a `.sdf` sidecar (one value per face). Segment IDs are stored in a `.seg` sidecar. Colored visualization is written as PLY because OBJ does not support per-face colors in CGAL's writer.
+
+For best results, run `mesh_repair` first to produce a watertight mesh.
 
 ## Adding New Operations
 

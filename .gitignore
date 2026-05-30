@@ -45,3 +45,6 @@ build/
 
 # reference docs
 cgal_docs_html/
+
+#vcpkg
+vcpkg_installed/
