@@ -1,6 +1,6 @@
 # neuromesh-cgal
 
-C++ mesh processing tools using CGAL for repair, simplification, SDF-based segmentation, label merging, and watertight mesh partitioning.
+C++ mesh processing tools using [CGAL](https://www.cgal.org/) algorithms for segmentation, label merging, and watertight mesh partitioning. 
 
 ## Prerequisites
 
@@ -36,28 +36,20 @@ Executables: `mesh_repair`, `mesh_simplify`, `mesh_segmentation`, `mesh_partitio
 
 ## Pipeline overview
 
-```mermaid
-flowchart LR
-    raw[Input mesh] --> repair[mesh_repair]
-    repair --> simplify[mesh_simplify]
-    simplify --> sdf["mesh_segmentation --sdf"]
-    sdf --> segment["mesh_segmentation --segment"]
-    segment --> merge["mesh_segmentation --merge"]
-    merge --> partition[mesh_partition]
-    partition --> parts[Watertight segment OBJs]
-```
+The pipeline assumes a **single connected, watertight 3D surface mesh** as input. 
+Mesh repair and simplification can be applied algorithmically using the `mesh_repair` and `mesh_simplify` executables in this project.
 
-**Full cell morphology example:**
+1. **Input mesh** — one connected component, watertight triangle surface
+2. **`mesh_segmentation --sdf`** — compute per-face SDF sidecar
+3. **`mesh_segmentation --segment`** — graph-cut segmentation
+4. **`mesh_segmentation --merge`** — merge labels using SDF-aware rules
+5. **`mesh_partition`** — extract watertight segment OBJs
+
+**Full cell morphology example** (starting from a prepared mesh):
 
 ```bash
-./build/mesh_repair \
-  --input data/cell.obj --output data/cell_repaired.obj
-
-./build/mesh_simplify \
-  --input data/cell_repaired.obj --output data/cell_simp.obj --fraction 0.5
-
 ./build/mesh_segmentation --sdf \
-  --input data/cell_simp.obj --output-prefix data/output/cell
+  --input data/cell.obj --output-prefix data/output/cell
 
 ./build/mesh_segmentation --segment \
   --input data/output/cell.obj --output-prefix data/output/cell_segmented \
@@ -72,8 +64,6 @@ flowchart LR
   --seg-file data/output/cell_merged.seg
 ```
 
-Run `mesh_repair` first for best segmentation results (watertight input).
-
 ## Sidecar file formats
 
 | File | Description |
@@ -83,47 +73,11 @@ Run `mesh_repair` first for best segmentation results (watertight input).
 | `*_merge_log.txt` | Merge statistics and per-operation log |
 | `partition_log.txt` | Per-segment partition stats in output directory |
 
-Sidecar face order matches `mesh.faces()` iteration order in the written mesh. If you simplify or repair after writing a sidecar, recompute it.
+Sidecar face order matches `mesh.faces()` iteration order in the written mesh. If you change the mesh topology or face count after writing a sidecar, recompute the sidecar from the updated mesh.
 
 ## Tool reference
 
 All tools use `--help` for usage. Positional arguments are **not supported** (use `--input`, `--output`, etc.).
-
-### mesh_repair
-
-Repairs meshes: stitch borders, fix non-manifold vertices, keep largest component(s), detect self-intersections, fill holes, remove degenerates.
-
-```bash
-mesh_repair --input data/in.obj --output data/out.obj [options]
-```
-
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--input` | required | Input mesh path |
-| `--output` | required | Output mesh path |
-| `--keep-components` | `1` | Number of largest connected components to keep |
-| `--no-stitch-borders` | off | Skip duplicate boundary stitching |
-| `--no-fix-nonmanifold` | off | Skip non-manifold vertex repair |
-| `--no-fill-holes` | off | Skip boundary hole filling |
-| `--continue-on-self-intersections` | off | Exit 0 even if self-intersections remain |
-| `--help` | | Show usage |
-
-### mesh_simplify
-
-Edge-collapse simplification to a target edge count or fraction.
-
-```bash
-mesh_simplify --input data/in.obj --output data/out.obj --fraction 0.5
-mesh_simplify --input data/in.obj --output data/out.obj --edge-count 1000
-```
-
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--input` | required | Input mesh path |
-| `--output` | required | Output mesh path |
-| `--fraction` | — | Keep this fraction of edges (0–1); exclusive with `--edge-count` |
-| `--edge-count` | — | Target edge count (≥1); exclusive with `--fraction` |
-| `--help` | | Show usage |
 
 ### mesh_segmentation
 
@@ -190,6 +144,45 @@ mesh_partition --input data/merged.obj --output-dir data/parts/ [options]
 | `--filename-width` | auto | Zero-pad width for filenames (minimum 3) |
 | `--help` | | Show usage |
 
+### Preprocessing (optional)
+
+#### mesh_repair
+
+Repairs meshes: stitch borders, fix non-manifold vertices, keep largest component(s), detect self-intersections, fill holes, remove degenerates.
+
+```bash
+mesh_repair --input data/in.obj --output data/out.obj [options]
+```
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--input` | required | Input mesh path |
+| `--output` | required | Output mesh path |
+| `--keep-components` | `1` | Number of largest connected components to keep |
+| `--no-stitch-borders` | off | Skip duplicate boundary stitching |
+| `--no-fix-nonmanifold` | off | Skip non-manifold vertex repair |
+| `--no-fill-holes` | off | Skip boundary hole filling |
+| `--continue-on-self-intersections` | off | Exit 0 even if self-intersections remain |
+| `--help` | | Show usage |
+
+#### mesh_simplify
+
+Edge-collapse simplification to a target edge count or fraction.
+
+```bash
+mesh_simplify --input data/in.obj --output data/out.obj --fraction 0.5
+mesh_simplify --input data/in.obj --output data/out.obj --edge-count 1000
+```
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--input` | required | Input mesh path |
+| `--output` | required | Output mesh path |
+| `--fraction` | — | Keep this fraction of edges (0–1); exclusive with `--edge-count` |
+| `--edge-count` | — | Target edge count (≥1); exclusive with `--fraction` |
+| `--help` | | Show usage |
+
+
 ## Tuning guide
 
 Defaults lean toward **more partitions** (less aggressive merging). If you still have too few parts, decrease `--bridge-max-faces`, raise `--spine-sdf-percentile`, or lower `--lambda` in the segment phase.
@@ -213,3 +206,4 @@ Defaults lean toward **more partitions** (less aggressive merging). If you still
 Neuron defaults assume thin spines and a large soma. For non-neuron meshes, start with `--clusters 4–8`, `--lambda 0.3`, and disable or relax merge thresholds. Inspect colored `.ply` output before partitioning.
 
 Defaults live in [`src/defaults.hpp`](src/defaults.hpp).
+
