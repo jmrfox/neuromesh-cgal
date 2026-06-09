@@ -1,6 +1,6 @@
 # neuromesh-cgal
 
-C++ mesh processing tools using CGAL for repair, simplification, SDF-based segmentation, label merging, and watertight mesh partitioning. Defaults are tuned on the bundled neuron cell morphology mesh (~330k faces, ~90 merged partitions with conservative merging), but every important parameter is exposed via CLI flags.
+C++ mesh processing tools using CGAL for repair, simplification, SDF-based segmentation, label merging, and watertight mesh partitioning.
 
 ## Prerequisites
 
@@ -213,39 +213,3 @@ Defaults lean toward **more partitions** (less aggressive merging). If you still
 Neuron defaults assume thin spines and a large soma. For non-neuron meshes, start with `--clusters 4–8`, `--lambda 0.3`, and disable or relax merge thresholds. Inspect colored `.ply` output before partitioning.
 
 Defaults live in [`src/defaults.hpp`](src/defaults.hpp).
-
-## Migration from positional CLI
-
-| Old | New |
-|-----|-----|
-| `mesh_repair in.obj out.obj` | `mesh_repair --input in.obj --output out.obj` |
-| `mesh_simplify in.obj out.obj 0.5` | `mesh_simplify --input in.obj --output out.obj --fraction 0.5` |
-| `mesh_segmentation --sdf in out` | `mesh_segmentation --sdf --input in --output-prefix out` |
-| `mesh_partition in.obj parts/` | `mesh_partition --input in.obj --output-dir parts/` |
-
-## Not yet implemented
-
-`mesh_smooth` and `mesh_remesh` are described in older notes but are not built in this repository.
-
-## Project structure
-
-```
-neuromesh-cgal/
-├── src/
-│   ├── cli_common.hpp        # Shared CLI helpers
-│   ├── defaults.hpp          # Default parameter values
-│   ├── mesh_repair.cpp
-│   ├── mesh_simplify.cpp
-│   ├── mesh_segmentation.cpp
-│   ├── segment_merge.hpp
-│   └── mesh_partition.cpp
-├── docs/                     # CGAL reference and repair strategy
-├── data/                     # Example meshes and outputs
-└── CMakeLists.txt
-```
-
-## Adding new operations
-
-1. Add a `.cpp` in `src/` and include `defaults.hpp` / `cli_common.hpp` as needed
-2. Register in `CMakeLists.txt` with `CGAL::CGAL` and `Eigen3::Eigen`
-3. Document all flags in this README
