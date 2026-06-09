@@ -31,3 +31,11 @@ target_link_libraries(mesh_segmentation
     Eigen3::Eigen
 )
 target_compile_definitions(mesh_segmentation PRIVATE CGAL_EIGEN3_ENABLED)
+
+add_executable(mesh_partition src/mesh_partition.cpp)
+target_link_libraries(mesh_partition
+    PRIVATE
+    CGAL::CGAL
+    Eigen3::Eigen
+)
+target_compile_definitions(mesh_partition PRIVATE CGAL_EIGEN3_ENABLED)

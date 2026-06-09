@@ -40,11 +40,8 @@
 # debug information files
 *.dwo
 
-# Build directory
+# project
 build/
-
-# reference docs
-cgal_docs_html/
-
-#vcpkg
+docs/
 vcpkg_installed/
+data/output/
