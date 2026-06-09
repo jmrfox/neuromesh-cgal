@@ -2,6 +2,8 @@
 
 C++ mesh processing tools using [CGAL](https://www.cgal.org/) algorithms for segmentation, label merging, and watertight mesh partitioning. 
 
+![Partitioned neuron morphology](neuron_partition.png)
+
 ## Prerequisites
 
 - CMake 3.20 or higher
@@ -45,7 +47,8 @@ Mesh repair and simplification can be applied algorithmically using the `mesh_re
 4. **`mesh_segmentation --merge`** — merge labels using SDF-aware rules
 5. **`mesh_partition`** — extract watertight segment OBJs
 
-**Full cell morphology example** (starting from a prepared mesh):
+
+**Example** (starting from a prepared mesh `cell.obj`):
 
 ```bash
 ./build/mesh_segmentation --sdf \
